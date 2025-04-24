@@ -1,0 +1,19 @@
+[
+  {
+    "arguments": [
+      "/usr/bin/clang++",
+      "-std=c++17",
+      "-Wall",
+      "-Wextra",
+      "-O2",
+      "-I/opt/homebrew/include",
+      "-c",
+      "-o",
+      "obj/main.o",
+      "src/main.cpp"
+    ],
+    "directory": "/Users/iulianesanu/Documents/projects/heliarch_v1",
+    "file": "/Users/iulianesanu/Documents/projects/heliarch_v1/src/main.cpp",
+    "output": "/Users/iulianesanu/Documents/projects/heliarch_v1/obj/main.o"
+  }
+]

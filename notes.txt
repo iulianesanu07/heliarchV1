@@ -1,0 +1,63 @@
+glGenBuffers(int nbr_buffers, int * buffer_id)
+glBindBuffer(int type, int buffer_id)
+glBufferData(int type, int size_in_bytes, *float data, int type_usage)
+
+glEnableVertexAttribArray(int jsp)
+glVertexAttribPointer(int index, int size, int type, bool normalized, int stride_size, int pointer)
+
+glUseShader(int shader_id)
+
+Cours : 
+
+Voici une fiche de révision synthétique suivie d'une version plus détaillée.
+
+---
+
+### **Processus de gestion des buffers et des attributs en OpenGL**  
+
+Lorsqu’on veut afficher un objet en OpenGL, il faut d’abord stocker ses données (coordonnées, couleurs, normales…) dans la mémoire GPU sous forme de **buffers**.  
+
+1. **Génération des buffers** : On commence par créer un ou plusieurs buffers avec `glGenBuffers(nbr_buffers, &buffer_id)`, qui génère des identifiants uniques pour les buffers à utiliser.  
+2. **Activation d’un buffer** : Ensuite, on lie un buffer avec `glBindBuffer(type, buffer_id)`, ce qui signifie que toutes les opérations futures sur ce type de buffer affecteront celui-ci. Par exemple, `GL_ARRAY_BUFFER` pour les sommets.  
+3. **Remplissage du buffer** : On transfère ensuite les données du CPU vers la mémoire GPU avec `glBufferData(type, size_in_bytes, data, type_usage)`. Ce dernier paramètre (`GL_STATIC_DRAW`, `GL_DYNAMIC_DRAW`…) indique à OpenGL comment les données seront utilisées.  
+
+Une fois les données en mémoire, il faut indiquer à OpenGL comment interpréter ces informations :  
+
+4. **Activation d’un attribut de sommet** : Avec `glEnableVertexAttribArray(index)`, on active l’attribut correspondant (ex : positions des sommets).  
+5. **Définition du format des données** : `glVertexAttribPointer(index, size, type, normalized, stride_size, pointer)` précise comment lire les données : le nombre de composants (ex : 2D = 2, 3D = 3), leur type (`GL_FLOAT`...), si elles doivent être normalisées, et l’espacement entre elles.  
+
+Enfin, pour afficher les objets avec le bon rendu graphique, il faut activer le shader voulu :  
+
+6. **Activation du shader** : `glUseProgram(shader_id)` permet d’utiliser un programme de shaders, ce qui influence la façon dont les vertices et pixels sont traités.
+
+---
+
+### **Version plus détaillée**
+
+1. **Génération et allocation des buffers**  
+   La fonction `glGenBuffers(nbr_buffers, &buffer_id)` crée un ou plusieurs identifiants pour des buffers OpenGL. Ces buffers ne sont pas encore associés à des données mais servent simplement à réserver des emplacements en mémoire GPU.  
+
+2. **Liaison du buffer au contexte OpenGL**  
+   Une fois le buffer généré, il faut le lier à un type particulier avec `glBindBuffer(type, buffer_id)`. Cela signifie que toutes les opérations sur ce type de buffer (`GL_ARRAY_BUFFER`, `GL_ELEMENT_ARRAY_BUFFER`...) affecteront cet ID.  
+
+3. **Transfert des données vers le GPU**  
+   `glBufferData(type, size_in_bytes, data, type_usage)` transfère les données du CPU vers la mémoire GPU.  
+   - `size_in_bytes` indique la taille totale des données.  
+   - `data` est un pointeur vers ces données.  
+   - `type_usage` (`GL_STATIC_DRAW`, `GL_DYNAMIC_DRAW`, `GL_STREAM_DRAW`...) aide le GPU à optimiser leur gestion en fonction de la fréquence de mise à jour attendue.  
+
+4. **Définition des attributs de sommets**  
+   OpenGL ne sait pas encore comment lire ces données. Pour cela :  
+   - `glEnableVertexAttribArray(index)` active un attribut spécifique (ex : position, couleur, normale…). Chaque attribut correspond à une variable d’entrée dans le **vertex shader**.  
+   - `glVertexAttribPointer(index, size, type, normalized, stride_size, pointer)` définit comment interpréter les données du buffer.  
+     - `index` : numéro de l’attribut (correspond au layout dans le shader).  
+     - `size` : nombre de composantes (ex : 2 pour un `vec2`, 3 pour un `vec3`).  
+     - `type` : format (`GL_FLOAT`, `GL_INT`…).  
+     - `normalized` : si vrai (`GL_TRUE`), les valeurs seront normalisées dans l’intervalle [0,1] (utile pour les couleurs).  
+     - `stride_size` : espace entre chaque ensemble de données (0 pour des données consécutives).  
+     - `pointer` : décalage par rapport au début des données.  
+
+5. **Utilisation des shaders**  
+   `glUseProgram(shader_id)` active un programme de shaders compilé et lié. Cela détermine comment les sommets et fragments seront traités par le GPU.  
+
+Cette séquence permet d’afficher un objet en OpenGL en passant par toutes les étapes essentielles : stockage des sommets en mémoire GPU, configuration des attributs et activation des shaders pour le rendu.
