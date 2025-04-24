@@ -1,32 +1,40 @@
-# Variables
-CXX = clang++
-CXXFLAGS = -std=c++17 -Wall -Wextra -O2 -I/opt/homebrew/include
-LDFLAGS = -L/opt/homebrew/lib -framework OpenGL -lGLEW -lglfw
-SRC_DIR = src
-OBJ_DIR = obj
+# === VARIABLES ===
+CXX      = clang++
+CXXFLAGS = -std=c++17 -Wall -Wextra -O2 -Iinclude -I/opt/homebrew/include
+LDFLAGS  = -L/opt/homebrew/lib -framework OpenGL -lglfw
 BUILD_DIR = build
-PLIST = Info.plist
+OBJ_DIR   = obj
+SRC_DIR   = src
 
-# Trouve tous les fichiers sources
-SOURCES = $(wildcard $(SRC_DIR)/*.cpp)
-OBJECTS = $(patsubst $(SRC_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(SOURCES))
+# === FICHIERS ===
+SRCS = $(SRC_DIR)/main.cpp $(SRC_DIR)/gl.c
+OBJS = $(patsubst $(SRC_DIR)/%.cpp, $(OBJ_DIR)/%.o, $(filter %.cpp,$(SRCS))) \
+       $(patsubst $(SRC_DIR)/%.c,   $(OBJ_DIR)/%.o, $(filter %.c,$(SRCS)))
+
 TARGET = $(BUILD_DIR)/heliarch_v1
 
-# Règle principale
+# === REGLES ===
+.PHONY: all clean run
+
 all: $(TARGET)
 
-# Création de l'exécutable
-$(TARGET): $(OBJECTS)
-	mkdir -p $(BUILD_DIR)
-	$(CXX) $^ -o $@ $(LDFLAGS) -Wl,-sectcreate,__TEXT,__info_plist,$(PLIST)
+$(TARGET): $(OBJS)
+	@mkdir -p $(BUILD_DIR)
+	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
-# Compilation des fichiers objets
+# Compile .cpp en .o
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
-	mkdir -p $(OBJ_DIR)
+	@mkdir -p $(OBJ_DIR)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-# Nettoyage
+# Compile .c en .o
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
+	@mkdir -p $(OBJ_DIR)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+run: $(TARGET)
+	./$(TARGET)
+
 clean:
 	rm -rf $(OBJ_DIR) $(BUILD_DIR)
 
-.PHONY: all clean

@@ -1,195 +1,135 @@
-#include <GL/glew.h>
+#include <glad/gl.h>
 #include <GLFW/glfw3.h>
-
-#include <fstream>
 #include <iostream>
-#include <sstream>
-#include <string>
 
-#include "IndexBuffer.h"
-#include "Renderer.h"
-#include "VertexBuffer.h"
+const char *vertexShaderSource =
+    "#version 410 core\n"
+    "layout (location = 0) in vec3 aPos;\n"
+    "void main()\n"
+    "{\n"
+    " gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
+    "}\0";
 
-struct ShaderProgramSource {
-  std::string VertexSource;
-  std::string FragmentSource;
-};
-
-static ShaderProgramSource ParseShader(const std::string &filepath) {
-  std::ifstream stream(filepath);
-
-  enum class ShaderType { NONE = -1, VERTEX = 0, FRAGMENT = 1 };
-
-  std::string line;
-  std::stringstream ss[2];
-  ShaderType type = ShaderType::NONE;
-  while (getline(stream, line)) {
-    if (line.find("#shader") != std::string::npos) {
-      if (line.find("vertex") != std::string::npos) {
-        // set mode to vertex
-        type = ShaderType::VERTEX;
-      } else if (line.find("fragment") != std::string::npos) {
-        // set mode to fragment
-        type = ShaderType::FRAGMENT;
-      }
-    } else {
-      ss[(int)type] << line << '\n';
-    }
-  }
-
-  return {ss[0].str(), ss[1].str()};
-}
-
-static unsigned int CompileShader(unsigned int type,
-                                  const std::string &source) {
-  unsigned int id = glCreateShader(type);
-  const char *src = source.c_str();
-  glShaderSource(id, 1, &src, nullptr);
-  glCompileShader(id);
-
-  int result;
-  glGetShaderiv(id, GL_COMPILE_STATUS, &result);
-  if (result == GL_FALSE) {
-    int length;
-    glGetShaderiv(id, GL_INFO_LOG_LENGTH, &length);
-    char *message = (char *)alloca(length * sizeof(char));
-    glGetShaderInfoLog(id, length, &length, message);
-    std::cout << "Failed to compile "
-              << (type == GL_VERTEX_SHADER ? "vertex" : "fragment") << " shader"
-              << std::endl;
-    std::cout << message << std::endl;
-    glDeleteShader(id);
-    return 0;
-  }
-
-  return id;
-}
-
-static unsigned int CreateShader(const std::string &vertexShader,
-                                 const std::string &fragmentShader) {
-  unsigned int program = glCreateProgram();
-  unsigned int vs = CompileShader(GL_VERTEX_SHADER, vertexShader);
-  unsigned int fs = CompileShader(GL_FRAGMENT_SHADER, fragmentShader);
-
-  glAttachShader(program, vs);
-  glAttachShader(program, fs);
-  glLinkProgram(program);
-  glValidateProgram(program);
-
-  glDeleteShader(vs);
-  glDeleteShader(fs);
-
-  return program;
-}
+const char *fragmentShaderSource =
+    "#version 410 core\n"
+    "out vec4 FragColor;\n"
+    "void main()\n"
+    "{\n"
+    " FragColor = vec4(0.8f, 0.3f, 0.02f, 1.0f);\n"
+    "}\n\0";
 
 int main() {
   if (!glfwInit()) {
-    std::cerr << "Failed to initialize GLFW!" << std::endl;
+    std::cerr << "Failed to initialize GLFW\n";
     return -1;
   }
 
+  // On force le Core Profile OpenGL 4.1 (macOS support max)
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+#ifdef __APPLE__
+  glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // Spécifique macOS
+#endif
 
-  GLFWwindow *window = glfwCreateWindow(800, 600, "Heliarch", nullptr, nullptr);
+  GLfloat vertices[] = {
+      -0.5f,     -0.5f * float(sqrt(3)) / 3,    0.0f, // Lower left corner
+      0.5f,      -0.5f * float(sqrt(3)) / 3,    0.0f, // Lower right corner
+      0.0f,      0.5f * float(sqrt(3)) * 2 / 3, 0.0f, // Upper corner
+      -0.5f / 2, 0.5f * float(sqrt(3)) / 6,     0.0f, // Inner left
+      0.5f / 2,  0.5f * float(sqrt(3)) / 6,     0.0f, // Inner right
+      0.0f,      -0.5f * float(sqrt(3)) / 3,    0.0f  // Inner down
+  };
+
+  GLuint indices[] = {
+    0, 3, 5,
+    3, 2, 4,
+    5, 4, 1
+  };
+
+  GLFWwindow *window =
+      glfwCreateWindow(800, 450, "Test OpenGL + GLAD", nullptr, nullptr);
   if (!window) {
-    std::cerr << "Failed to create window!" << std::endl;
+    std::cerr << "Failed to create GLFW window\n";
     glfwTerminate();
     return -1;
   }
 
   glfwMakeContextCurrent(window);
-  if (glewInit() != GLEW_OK) {
-    std::cerr << "Failed to initialize GLEW!" << std::endl;
+
+  if (!gladLoadGL(glfwGetProcAddress)) {
+    std::cerr << "Failed to initialize GLAD\n";
     return -1;
   }
 
-  // Ajuste le swap avec le refreshrate de l'ecran (VSYNC)
-  glfwSwapInterval(1);
+  GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
+  glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
+  glCompileShader(vertexShader);
 
-  // Tentative d'empecher la mise a l'echelle HiDPI
-  int fbWidth, fbHeight;
-  glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
-  std::cout << "Framebuffer size : " << fbWidth << "x" << fbHeight << std::endl;
-  // on cree un nouveau "scope" pour eviter une sorte de connerie que fait opengl
-  {
-    float positions[] = {
-        -0.5f, -0.5f, // 0
-        0.5f,  -0.5f, // 1
-        0.5f,  0.5f,  // 2
-        -0.5f, 0.5f   // 3
-    };
+  GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+  glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
+  glCompileShader(fragmentShader);
 
-    unsigned int indicies[] = {
-        0, 1, 2, // triangle 1
-        0, 2, 3  // triangle 2
-    };
+  GLuint shaderProgram = glCreateProgram();
 
-    unsigned int vao;
-    GLCall(glGenVertexArrays(1, &vao));
-    GLCall(glBindVertexArray(vao));
+  glAttachShader(shaderProgram, vertexShader);
+  glAttachShader(shaderProgram, fragmentShader);
+  glLinkProgram(shaderProgram);
 
-    VertexBuffer vb(positions, 4 * 2 * sizeof(float));
+  glDeleteShader(vertexShader);
+  glDeleteShader(fragmentShader);
 
-    GLCall(glEnableVertexAttribArray(0));
-    GLCall(
-        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0));
+  GLuint VAO, VBO, EBO;
 
-    IndexBuffer ib(indicies, 6);
+  glGenVertexArrays(1, &VAO);
+  glGenBuffers(1, &VBO);
+  glGenBuffers(1, &EBO);
 
-    ShaderProgramSource source = ParseShader("res/shaders/Basic.shader");
+  glBindVertexArray(VAO);
 
-    /* print shaders
-      std::cout << "VERTEX" << std::endl;
-      std::cout << source.VertexSource << std::endl;
-      std::cout << "FRAGMENT" << std::endl;
-      std::cout << source.FragmentSource << std::endl;
-    */
+  glBindBuffer(GL_ARRAY_BUFFER, VBO);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-    unsigned int shader =
-        CreateShader(source.VertexSource, source.FragmentSource);
-    GLCall(glUseProgram(shader));
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
-    GLCall(int location = glGetUniformLocation(shader, "u_Color"));
-    ASSERT(location != 1);
-    GLCall(glUniform4f(location, 0.8f, 0.3f, 0.8f, 1.0f));
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, (void *)0);
+  glEnableVertexAttribArray(0);
 
-    // Unbind everything
-    GLCall(glBindVertexArray(0));
-    GLCall(glUseProgram(0));
-    GLCall(glBindBuffer(GL_ARRAY_BUFFER, 0));
-    GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
+  glBindVertexArray(0);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
-    float r = 0.0f;
-    float increment = 0.05f;
-    while (!glfwWindowShouldClose(window)) {
+  while (!glfwWindowShouldClose(window)) {
+    glEnable(GL_SCISSOR_TEST); // active la découpe par zone
 
-      /* Render here */
-      glClear(GL_COLOR_BUFFER_BIT);
+    // === Zone principale (gauche, gris)
+    glViewport(0, 0, 600, 450);
+    glScissor(0, 0, 600, 450); // Limite le clear à cette zone
+    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+    glUseProgram(shaderProgram);
+    glBindVertexArray(VAO);
+    glDrawElements(GL_TRIANGLES, 9, GL_UNSIGNED_INT, 0);
 
-      GLCall(glUseProgram(shader)); // Create shader
-      GLCall(glUniform4f(location, r, 0.3f, 0.8f,
-                         1.0f)); // set u_Color in the shader
+    // === Panneau latéral (droite, moins gris)
+    glViewport(600, 0, 200, 450);
+    glScissor(600, 0, 200, 450);
+    glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
 
-      GLCall(glBindVertexArray(vao));
-      ib.Bind();
+    glDisable(GL_SCISSOR_TEST); // désactivation optionnelle
 
-      GLCall(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr));
-
-      if (r > 1.0f)
-        increment = -0.05f;
-      else if (r < 0.0f)
-        increment = 0.05f;
-
-      r += increment;
-
-      glfwSwapBuffers(window);
-      glfwPollEvents();
-    }
-
-    glDeleteProgram(shader);
+    glfwSwapBuffers(window);
+    glfwPollEvents();
   }
+
+  glDeleteVertexArrays(1, &VAO);
+  glDeleteBuffers(1, &VBO);
+  glDeleteProgram(shaderProgram);
+
+  glfwDestroyWindow(window);
+
   glfwTerminate();
   return 0;
 }

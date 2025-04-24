@@ -6,6 +6,7 @@
       "-Wall",
       "-Wextra",
       "-O2",
+      "-Iinclude",
       "-I/opt/homebrew/include",
       "-c",
       "-o",
@@ -15,5 +16,55 @@
     "directory": "/Users/iulianesanu/Documents/projects/heliarch_v1",
     "file": "/Users/iulianesanu/Documents/projects/heliarch_v1/src/main.cpp",
     "output": "/Users/iulianesanu/Documents/projects/heliarch_v1/obj/main.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/clang++",
+      "-std=c++17",
+      "-Wall",
+      "-Wextra",
+      "-O2",
+      "-Iinclude",
+      "-I/opt/homebrew/include",
+      "-c",
+      "-o",
+      "obj/gl.o",
+      "src/gl.c"
+    ],
+    "directory": "/Users/iulianesanu/Documents/projects/heliarch_v1",
+    "file": "/Users/iulianesanu/Documents/projects/heliarch_v1/src/gl.c",
+    "output": "/Users/iulianesanu/Documents/projects/heliarch_v1/obj/gl.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/clang++",
+      "-c",
+      "obj/main.o",
+      "obj/gl.o",
+      "-framework",
+      "OpenGL",
+      "-o",
+      "build/heliarch_v1",
+      "src/gl.c"
+    ],
+    "directory": "/Users/iulianesanu/Documents/projects/heliarch_v1",
+    "file": "/Users/iulianesanu/Documents/projects/heliarch_v1/src/gl.c",
+    "output": "/Users/iulianesanu/Documents/projects/heliarch_v1/build/heliarch_v1"
+  },
+  {
+    "arguments": [
+      "/usr/bin/clang++",
+      "-c",
+      "obj/main.o",
+      "obj/gl.o",
+      "-framework",
+      "OpenGL",
+      "-o",
+      "build/heliarch_v1",
+      "src/main.cpp"
+    ],
+    "directory": "/Users/iulianesanu/Documents/projects/heliarch_v1",
+    "file": "/Users/iulianesanu/Documents/projects/heliarch_v1/src/main.cpp",
+    "output": "/Users/iulianesanu/Documents/projects/heliarch_v1/build/heliarch_v1"
   }
 ]
