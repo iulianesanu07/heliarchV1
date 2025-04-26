@@ -7,9 +7,14 @@ OBJ_DIR   = obj
 SRC_DIR   = src
 
 # === FICHIERS ===
-SRCS = $(SRC_DIR)/main.cpp $(SRC_DIR)/gl.c
-OBJS = $(patsubst $(SRC_DIR)/%.cpp, $(OBJ_DIR)/%.o, $(filter %.cpp,$(SRCS))) \
-       $(patsubst $(SRC_DIR)/%.c,   $(OBJ_DIR)/%.o, $(filter %.c,$(SRCS)))
+# Prend tous les .cpp et .c du dossier src/
+SRCS_CPP = $(wildcard $(SRC_DIR)/*.cpp)
+SRCS_C   = $(wildcard $(SRC_DIR)/*.c)
+SRCS     = $(SRCS_CPP) $(SRCS_C)
+
+# Génère les .o correspondants dans obj/
+OBJS = $(patsubst $(SRC_DIR)/%.cpp, $(OBJ_DIR)/%.o, $(SRCS_CPP)) \
+       $(patsubst $(SRC_DIR)/%.c,   $(OBJ_DIR)/%.o, $(SRCS_C))
 
 TARGET = $(BUILD_DIR)/heliarch_v1
 
