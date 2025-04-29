@@ -1,6 +1,7 @@
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
+#include <iterator>
 #include <stb/stb_image.hpp>
 
 #include "shaderClass.hpp"
@@ -23,21 +24,35 @@ int main() {
   glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // Spécifique macOS
 #endif
 
-  GLfloat vertices[] = {
-      //   POSITION   //       COLOR
-    -0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f,   // lower left corner
-    -0.5f,  0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,   // upper left corner
-     0.5f,  0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,   // upper right corner
-     0.5f, -0.5f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f    // lower left corner
+  GLfloat sunVertices[] = {
+    //     POSITION     //       COLOR    //  TEX COORD
+    -0.25f, -0.25f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,   // lower left corner
+    -0.25f,  0.25f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f,   // upper left corner
+     0.25f,  0.25f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f,   // upper right corner
+     0.25f, -0.25f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f    // lower left corner
+
+  };
+  
+  GLfloat planetVertices[] = {
+    -0.9f, -0.1f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+    -0.9f,  0.1f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f,
+    -0.7f,  0.1f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f,
+    -0.7f, -0.1f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f
   };
 
+
   GLuint indices[] = {
+    // sun
     0, 2, 1,
-    0, 3, 2
+    0, 3, 2,
+
+    // planet
+    4, 6, 5,
+    4, 7, 6
   };
 
   GLFWwindow *window =
-      glfwCreateWindow(800, 450, "Test OpenGL + GLAD", nullptr, nullptr);
+      glfwCreateWindow(800, 600, "Test OpenGL + GLAD", nullptr, nullptr);
   if (!window) {
     std::cerr << "Failed to create GLFW window\n";
     glfwTerminate();
@@ -51,15 +66,21 @@ int main() {
     return -1;
   }
 
+  
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  
 
   Shader shaderProgram("res/shaders/default.vert", "res/shaders/default.frag");
 
   VAO VAO1;
   VAO1.Bind();
 
-  VBO VBO1(vertices, sizeof(vertices));
+  std::vector<GLfloat> allVercices;
+  allVercices.insert(allVercices.end(), std::begin(sunVertices), std::end(sunVertices));
+  allVercices.insert(allVercices.end(), std::begin(planetVertices), std::end(planetVertices));
+
+  VBO VBO1(allVercices.data(), allVercices.size() * sizeof(float));
   EBO EBO1(indices, sizeof(indices));
 
   VAO1.LinkAttrib(VBO1, 0, 3, GL_FLOAT, 8 * sizeof(float), (void*)0);
@@ -70,36 +91,44 @@ int main() {
   VBO1.Unbind();
   EBO1.Unbind();
 
-  GLuint uniID = glGetUniformLocation(shaderProgram.ID, "scale");
-
   Texture sun("res/textures/SpaceAsset/Space Elements/Sun/sun1.png", GL_TEXTURE_2D, GL_TEXTURE0, GL_RGBA, GL_UNSIGNED_BYTE);
   sun.texUnit(shaderProgram, "tex0", 0);
 
+  Texture planet("res/textures/planet_pack/machine_world.png", GL_TEXTURE_2D, GL_TEXTURE0, GL_RGBA, GL_UNSIGNED_BYTE);
+  planet.texUnit(shaderProgram, "tex0", 0);
 
   while (!glfwWindowShouldClose(window)) {
     glEnable(GL_SCISSOR_TEST); // active la découpe par zone
 
     // === Zone principale (gauche, gris)
-    glViewport(0, 0, 600, 450);
-    glScissor(0, 0, 600, 450); // Limite le clear à cette zone
+    glViewport(0, 0, 600, 600);
+    glScissor(0, 0, 600, 600); // Limite le clear à cette zone
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
     shaderProgram.Activate();
 
-    glUniform1f(uniID, 0.5f);
     sun.Bind();
 
     VAO1.Bind();
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
+    planet.Bind();
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)(6 * sizeof(float)));
+
     // === Panneau latéral (droite, moins gris)
-    glViewport(600, 0, 200, 450);
-    glScissor(600, 0, 200, 450);
+    glViewport(600, 0, 200, 600);
+    glScissor(600, 0, 200, 600);
     glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
     glDisable(GL_SCISSOR_TEST); // désactivation optionnelle
+    
+    GLenum err = glGetError();
+    if (err != GL_NO_ERROR) {
+      std::cerr << "OpenGL error: " << err << std::endl;
+    }
+
 
     glfwSwapBuffers(window);
     glfwPollEvents();
