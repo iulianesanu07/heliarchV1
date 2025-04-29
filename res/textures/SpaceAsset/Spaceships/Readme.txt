@@ -1,0 +1,1 @@
+Tip: add a particle using your game engine's particle system on the back of a spaceship to add a fire effect.

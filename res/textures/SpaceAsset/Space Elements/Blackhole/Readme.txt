@@ -1,0 +1,1 @@
+Tip: Animate blackhole1 by rotating it constantly in a clockwise direction.
