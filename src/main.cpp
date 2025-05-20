@@ -4,6 +4,7 @@
 #include <iterator>
 #include <stb/stb_image.hpp>
 
+#include "Planet.hpp"
 #include "shaderClass.hpp"
 #include "EBO.hpp"
 #include "VBO.hpp"
@@ -66,7 +67,7 @@ int main() {
     return -1;
   }
 
-  
+  // Sert a activer la trensparance sur les textures png
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   
@@ -91,14 +92,13 @@ int main() {
   VBO1.Unbind();
   EBO1.Unbind();
 
-  Texture sun("res/textures/SpaceAsset/Space Elements/Sun/sun1.png", GL_TEXTURE_2D, GL_TEXTURE0, GL_RGBA, GL_UNSIGNED_BYTE);
-  sun.texUnit(shaderProgram, "tex0", 0);
+  Planet sun({0.0f, 0.0f, 0.0f}, 1.0f, "res/textures/SpaceAsset/Space Elements/Sun/sun2.png", 0);
+  Planet planet({0.7f, 0.0f, 0.0f}, 0.5f, "res/textures/planet_pack/moon.png", 1);
 
-  Texture planet("res/textures/planet_pack/iceplanet.png", GL_TEXTURE_2D, GL_TEXTURE0, GL_RGBA, GL_UNSIGNED_BYTE);
-  planet.texUnit(shaderProgram, "tex0", 0);
-
-  GLuint posUni = glGetUniformLocation(shaderProgram.ID, "pos");
-  GLuint scaleUni = glGetUniformLocation(shaderProgram.ID, "scale");
+  // Setup : lier les textures une fois
+  shaderProgram.Activate();
+  sun.m_texture.Bind();
+  planet.m_texture.Bind();
 
   while (!glfwWindowShouldClose(window)) {
 
@@ -118,15 +118,8 @@ int main() {
 
     VAO1.Bind();
 
-    sun.Bind();
-    glUniform3f(posUni, 0.0f, 0.0f, 0.0f);
-    glUniform1f(scaleUni, 1.0f);
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-
-    planet.Bind();
-    glUniform3f(posUni, posx, posy, 0.0f);
-    glUniform1f(scaleUni, 0.5f);
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)(6 * sizeof(float)));
+    sun.draw(shaderProgram, VAO1); 
+    planet.draw(shaderProgram, VAO1); 
 
     // === Panneau latéral (droite, moins gris)
     glViewport(600, 0, 200, 600);
@@ -149,7 +142,6 @@ int main() {
   VAO1.Delete();
   VBO1.Delete();
   EBO1.Delete();
-  sun.Delete();
   shaderProgram.Delete();
 
   glfwDestroyWindow(window);
