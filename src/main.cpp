@@ -34,10 +34,10 @@ int main() {
   };
   
   GLfloat planetVertices[] = {
-    -0.9f, -0.1f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-    -0.9f,  0.1f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f,
-    -0.7f,  0.1f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f,
-    -0.7f, -0.1f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f
+    -0.25f, -0.25f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,   // lower left corner
+    -0.25f,  0.25f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f,   // upper left corner
+     0.25f,  0.25f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f,   // upper right corner
+     0.25f, -0.25f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f    // lower left corner
   };
 
 
@@ -94,10 +94,18 @@ int main() {
   Texture sun("res/textures/SpaceAsset/Space Elements/Sun/sun1.png", GL_TEXTURE_2D, GL_TEXTURE0, GL_RGBA, GL_UNSIGNED_BYTE);
   sun.texUnit(shaderProgram, "tex0", 0);
 
-  Texture planet("res/textures/planet_pack/machine_world.png", GL_TEXTURE_2D, GL_TEXTURE0, GL_RGBA, GL_UNSIGNED_BYTE);
+  Texture planet("res/textures/planet_pack/iceplanet.png", GL_TEXTURE_2D, GL_TEXTURE0, GL_RGBA, GL_UNSIGNED_BYTE);
   planet.texUnit(shaderProgram, "tex0", 0);
 
+  GLuint posUni = glGetUniformLocation(shaderProgram.ID, "pos");
+  GLuint scaleUni = glGetUniformLocation(shaderProgram.ID, "scale");
+
   while (!glfwWindowShouldClose(window)) {
+
+    double currentTime = glfwGetTime();
+    float posx =  0.7f * sin(currentTime);
+    float posy = 0.7f * cos(currentTime);
+
     glEnable(GL_SCISSOR_TEST); // active la découpe par zone
 
     // === Zone principale (gauche, gris)
@@ -108,12 +116,16 @@ int main() {
 
     shaderProgram.Activate();
 
-    sun.Bind();
-
     VAO1.Bind();
+
+    sun.Bind();
+    glUniform3f(posUni, 0.0f, 0.0f, 0.0f);
+    glUniform1f(scaleUni, 1.0f);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
     planet.Bind();
+    glUniform3f(posUni, posx, posy, 0.0f);
+    glUniform1f(scaleUni, 0.5f);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)(6 * sizeof(float)));
 
     // === Panneau latéral (droite, moins gris)
