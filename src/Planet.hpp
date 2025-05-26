@@ -6,8 +6,10 @@
 
 class Planet : public Object {
 public:
-    Planet(glm::vec3 pos, float scale, const char* texPath, GLuint texUnit);
-    void draw(Shader& shader, VAO& vao) override;
+    float m_orbit;
+    
+    Planet(glm::vec3 pos, float scale, const char* texPath, GLuint texUnit, float orbit);
+    void draw(Shader& shader, VAO& vao, glm::vec3 pos) override;
 };
 
 #endif

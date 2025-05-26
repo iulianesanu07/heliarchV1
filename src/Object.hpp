@@ -18,7 +18,7 @@ public:
 
     Object(glm::vec3 pos, float scale, const char* texPath, GLuint texUnit);
 
-    virtual void draw(Shader& shader, VAO& vao) = 0;
+    virtual void draw(Shader& shader, VAO& vao, glm::vec3 pos) = 0;
     virtual ~Object() {}
 };
 

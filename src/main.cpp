@@ -1,3 +1,4 @@
+#include <cstdio>
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
@@ -71,6 +72,7 @@ int main() {
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   
+  int windowScaler = 2;
 
   Shader shaderProgram("res/shaders/default.vert", "res/shaders/default.frag");
 
@@ -92,8 +94,8 @@ int main() {
   VBO1.Unbind();
   EBO1.Unbind();
 
-  Planet sun({0.0f, 0.0f, 0.0f}, 1.0f, "res/textures/SpaceAsset/Space Elements/Sun/sun2.png", 0);
-  Planet planet({0.7f, 0.0f, 0.0f}, 0.5f, "res/textures/planet_pack/moon.png", 1);
+  Planet sun({0.0f, 0.0f, 0.0f}, 1.0f, "res/textures/planet_pack/sun.png", 1, 0.0f);
+  Planet planet({0.7f, 0.0f, 0.0f}, 0.5f, "res/textures/planet_pack/iceplanet.png", 1, 0.9f);
 
   // Setup : lier les textures une fois
   shaderProgram.Activate();
@@ -102,15 +104,12 @@ int main() {
 
   while (!glfwWindowShouldClose(window)) {
 
-    double currentTime = glfwGetTime();
-    float posx =  0.7f * sin(currentTime);
-    float posy = 0.7f * cos(currentTime);
 
     glEnable(GL_SCISSOR_TEST); // active la découpe par zone
 
     // === Zone principale (gauche, gris)
-    glViewport(0, 0, 600, 600);
-    glScissor(0, 0, 600, 600); // Limite le clear à cette zone
+    glViewport(0, 0, 600 * windowScaler, 600 * windowScaler);
+    glScissor(0, 0, 600 * windowScaler, 600 * windowScaler); // Limite le clear à cette zone
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
@@ -118,12 +117,12 @@ int main() {
 
     VAO1.Bind();
 
-    sun.draw(shaderProgram, VAO1); 
-    planet.draw(shaderProgram, VAO1); 
+    sun.draw(shaderProgram, VAO1, {0.0f, 0.0f, 0.0f}); 
+    planet.draw(shaderProgram, VAO1, {0.0f, 0.0f, 0.0f}); 
 
     // === Panneau latéral (droite, moins gris)
-    glViewport(600, 0, 200, 600);
-    glScissor(600, 0, 200, 600);
+    glViewport(600 * windowScaler, 0, 200 * windowScaler, 600 * windowScaler);
+    glScissor(600 * windowScaler, 0, 200 * windowScaler, 600 * windowScaler);
     glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
