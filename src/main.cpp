@@ -71,8 +71,13 @@ int main() {
   // Sert a activer la trensparance sur les textures png
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+  int maxTextureUnits = 0;
+  glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &maxTextureUnits);
+  printf("Texture units disponibles : %d\n", maxTextureUnits);
+
   
-  int windowScaler = 2;
+  int windowScaler = 1;
 
   Shader shaderProgram("res/shaders/default.vert", "res/shaders/default.frag");
 
@@ -94,13 +99,20 @@ int main() {
   VBO1.Unbind();
   EBO1.Unbind();
 
-  Planet sun({0.0f, 0.0f, 0.0f}, 1.0f, "res/textures/planet_pack/sun.png", 1, 0.0f);
-  Planet planet({0.7f, 0.0f, 0.0f}, 0.5f, "res/textures/planet_pack/iceplanet.png", 1, 0.9f);
+  Planet sun({0.0f, 0.0f, 0.0f}, 1.0f, "res/textures/planet_pack/sun.png", 0, 0.0f);
+  Planet planet({0.7f, 0.0f, 0.0f}, 0.5f, "res/textures/planet_pack/iceplanet.png", 1, 0.5f);
 
   // Setup : lier les textures une fois
   shaderProgram.Activate();
+
+  glActiveTexture(GL_TEXTURE0 + sun.m_textureUnit);
   sun.m_texture.Bind();
+
+  glActiveTexture(GL_TEXTURE0 + planet.m_textureUnit);
   planet.m_texture.Bind();
+  
+
+  
 
   while (!glfwWindowShouldClose(window)) {
 
